@@ -6,12 +6,15 @@ type UseSpectrogramRendererParams = {
   stream: MediaStream;
   gain: number;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  /** Called once when the AnalyserNode is set up, enabling auto-filter detection */
+  onAnalyserReady?: (analyser: AnalyserNode) => void;
 };
 
 export const useSpectrogramRenderer = ({
   stream,
   gain,
   canvasRef,
+  onAnalyserReady,
 }: UseSpectrogramRendererParams) => {
   const rafRef = useRef<number | null>(null);
   const nodesRef = useRef<{
@@ -45,6 +48,11 @@ export const useSpectrogramRenderer = ({
     gainNode.connect(analyser);
 
     nodesRef.current = { audioCtx, source, analyser };
+
+    // Notify parent that analyser is ready (for auto-filter detection)
+    if (onAnalyserReady) {
+      onAnalyserReady(analyser);
+    }
 
     const freqBins = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(freqBins);

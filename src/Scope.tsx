@@ -1,8 +1,10 @@
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import { Box } from "@mantine/core";
 import { useSpectrogramRenderer } from "./hooks/useSpectrogramRenderer";
 import { useCanvasInteraction } from "./hooks/useCanvasInteraction";
+import { useAutoFilter } from "./hooks/useAutoFilter";
 import { calculateBandPosition } from "./utils/frequencyUtils";
+import type { DetectionResult } from "./utils/morseSignalDetector";
 
 type ScopeProps = {
   stream: MediaStream;
@@ -10,6 +12,9 @@ type ScopeProps = {
   filterFreq: number | null;
   filterWidth: number;
   gain: number;
+  /** Called when auto-filter detects a Morse signal frequency */
+  onAutoDetected?: (result: DetectionResult | null) => void;
+  autoFilterEnabled?: boolean;
 };
 
 export const Scope = ({
@@ -18,10 +23,26 @@ export const Scope = ({
   filterFreq,
   filterWidth,
   gain,
+  onAutoDetected,
+  autoFilterEnabled = false,
 }: ScopeProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
 
-  useSpectrogramRenderer({ stream, gain, canvasRef });
+  const handleAnalyserReady = useCallback((analyser: AnalyserNode) => {
+    analyserRef.current = analyser;
+    if (onAutoDetected) {
+      onAutoDetected(null); // signal that analyser is ready
+    }
+  }, [onAutoDetected]);
+
+  useSpectrogramRenderer({ stream, gain, canvasRef, onAnalyserReady: handleAnalyserReady });
+
+  useAutoFilter({
+    analyserRef,
+    enabled: autoFilterEnabled,
+    onDetected: onAutoDetected ?? (() => {}),
+  });
 
   useCanvasInteraction({ canvasRef, filterFreq, setFilterFreq, filterWidth });
 

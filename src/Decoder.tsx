@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { DEFAULT_DECODE_BANDWIDTH_HZ, SAMPLE_RATE } from "./const";
 import { Scope } from "./Scope";
 import { useDecode } from "./useDecode";
 import { DecodeDisplay } from "./DecodeDisplay";
 import { Box, Button, Flex, Stack, NativeSelect, Tooltip, SegmentedControl, Text, Paper } from "@mantine/core";
+import type { DetectionResult } from "./utils/morseSignalDetector";
 
 type DecoderMode = "DL" | "BAYESIAN";
 
@@ -14,6 +15,8 @@ export const Decoder = () => {
   const [gain, setGain] = useState<number>(0);
   const [language, setLanguage] = useState<"EN" | "EN/JA">("EN");
   const [decoderMode, setDecoderMode] = useState<DecoderMode>("DL");
+  const [autoFilterEnabled, setAutoFilterEnabled] = useState(false);
+  const [autoDetectedFreq, setAutoDetectedFreq] = useState<number | null>(null);
 
   const [audioInputDevices, setAudioInputDevices] = useState<MediaDeviceInfo[]>(
     [],
@@ -35,6 +38,16 @@ export const Decoder = () => {
     _setSelectedAudioInput(deviceId);
     getStream(deviceId);
   };
+
+  const handleAutoDetected = useCallback((result: DetectionResult | null) => {
+    if (result && autoFilterEnabled) {
+      // Set detected frequency as filter, use detected bandwidth
+      setAutoDetectedFreq(result.frequency);
+      setFilterFreq(result.frequency);
+      // Auto-enable filter width 250 when detected
+      setFilterWidth(250);
+    }
+  }, [autoFilterEnabled]);
 
   const getStream = async (selectedAudioInput?: string) => {
     if (stream) {
@@ -133,6 +146,8 @@ export const Decoder = () => {
                 filterFreq={filterFreq}
                 filterWidth={filterWidth}
                 gain={gain}
+                autoFilterEnabled={autoFilterEnabled}
+                onAutoDetected={handleAutoDetected}
               />
             ) : (
               <Box
@@ -193,6 +208,33 @@ export const Decoder = () => {
             rightSection={"dB"}
             styles={{ input: { borderColor: "#d1fae5" } }}
           />
+          <Tooltip label="Automatically detect Morse signal frequency from the spectrogram." withArrow>
+            <Box>
+              <Button
+                size="sm"
+                variant={autoFilterEnabled ? "filled" : "outline"}
+                color={autoFilterEnabled ? "teal" : "gray"}
+                onClick={() => {
+                  setAutoFilterEnabled((prev) => {
+                    const next = !prev;
+                    if (!next) {
+                      // Turning off auto-filter: clear detected frequency
+                      setAutoDetectedFreq(null);
+                    }
+                    return next;
+                  });
+                }}
+                disabled={!stream}
+                styles={{
+                  root: { fontWeight: 600 },
+                }}
+              >
+                {autoFilterEnabled
+                  ? `AUTO ${autoDetectedFreq ? `(${autoDetectedFreq}Hz)` : "..."}`
+                  : "AUTO"}
+              </Button>
+            </Box>
+          </Tooltip>
           <Tooltip label="Click the scope to enable the filter." withArrow>
             <Box>
               <NativeSelect
@@ -217,7 +259,7 @@ export const Decoder = () => {
 
                   setFilterWidth(nextWidth);
                 }}
-                disabled={!isFilterEnabled}
+                disabled={!isFilterEnabled || autoFilterEnabled}
                 rightSection={"Hz"}
                 styles={{ input: { borderColor: "#d1fae5" } }}
               />

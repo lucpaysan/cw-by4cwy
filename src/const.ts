@@ -158,3 +158,7 @@ export const DECODABLE_MIN_FREQ_HZ = 400;
 export const DECODABLE_MAX_FREQ_HZ = 1200;
 export const DEFAULT_DECODE_BANDWIDTH_HZ =
   DECODABLE_MAX_FREQ_HZ - DECODABLE_MIN_FREQ_HZ;
+
+// Auto-filter detection parameters
+export const AUTO_DETECT_INTERVAL_MS = 500;
+export const AUTO_DETECT_MIN_CONFIDENCE = 0.3;
