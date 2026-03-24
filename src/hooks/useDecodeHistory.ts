@@ -12,7 +12,7 @@ export const useDecodeHistory = (currentSegments: TextSegment[]) => {
   const [confirmedEntries, setConfirmedEntries] = useState<DecodeHistoryEntry[]>([]);
 
   const ZONE_WIDTH = 32;
-  const ZONE_START_RATIO = 0.05;
+  const ZONE_START_RATIO = 0.25;
 
   const clearHistory = () => {
     setDecodeHistory("");
@@ -21,6 +21,7 @@ export const useDecodeHistory = (currentSegments: TextSegment[]) => {
 
   useEffect(() => {
     const fullText = currentSegments.map((seg) => seg.text).join("");
+    console.log(fullText.length)
 
     if (!fullText) {
       return;
@@ -32,7 +33,7 @@ export const useDecodeHistory = (currentSegments: TextSegment[]) => {
     const zoneText = fullText.slice(zoneStart, zoneEnd);
 
     // Extract only letters (A-Z, a-z) from the zone, no spaces or punctuation
-    const lettersOnly = zoneText.replace(/[^A-Za-z]/g, "");
+    const lettersOnly = zoneText.replace(/[^A-Za-z0-9./?]/g, "");
 
     // Add zone content to history on every refresh, no comparison
     if (lettersOnly) {
