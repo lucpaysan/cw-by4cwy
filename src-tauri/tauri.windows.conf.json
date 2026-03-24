@@ -1,5 +1,5 @@
 {
   "bundle": {
-    "targets": ["nsis", "app"]
+    "targets": ["app"]
   }
 }
