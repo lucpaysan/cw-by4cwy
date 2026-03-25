@@ -32,7 +32,9 @@
 ## 鸣谢
 
 - 原项目: [web-deep-cw-decoder](https://github.com/e04/web-deep-cw-decoder) by e04
-- 感谢 BH4DUF、BH4HNM 对软件测试的支持
+- 感谢 BH4DUF、BH4HNM 对程序的编译修改与测试
+- 感谢 BH4FSP、BH4GSZ 与金山区青少年活动中心共同参与测试
+- 感谢 BH4FRJ 对产品功能提出的宝贵意见
 - 感谢 BY4CWY 提供整个测试平台
 - [ggmorse](https://github.com/ggerganov/ggmorse) - Goertzel 算法参考
 - [DeepCW](https://github.com/VE3NEA/DeepCW) - 深度学习解码参考
