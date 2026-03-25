@@ -22,3 +22,12 @@ node_modules
 *.sw?
 
 /dist
+
+# Tauri build outputs
+*.app
+*.ipa
+*.apk
+*.exe
+/nsis/
+/android/
+/macOS/
