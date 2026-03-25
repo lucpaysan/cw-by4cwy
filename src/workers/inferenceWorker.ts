@@ -9,8 +9,8 @@ import {
 } from "../utils/signalQuality";
 import { ENGLISH_CONFIG } from "../const";
 
-// Dynamic model URL using Vite's import.meta.url
-const MODEL_URL = new URL(`../${ENGLISH_CONFIG.MODEL_FILE}`, import.meta.url).href;
+// Model URL - served from public directory at root
+const MODEL_URL = `/${ENGLISH_CONFIG.MODEL_FILE}`;
 
 type WorkerRequest =
   | { id: number; type: "loadModel" }
