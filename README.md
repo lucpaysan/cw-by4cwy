@@ -1,59 +1,64 @@
 # CW LAB
 
-[DEMO](https://e04.github.io/web-deep-cw-decoder/)
+**基于 [web-deep-cw-decoder](https://github.com/e04/web-deep-cw-decoder) by e04 (MIT License) 二创**
+**二创作者: BY4CWY**
 
-<img width="825" height="514" alt="web-deep-cw" src="https://github.com/user-attachments/assets/a224be0a-a685-4dd8-be99-d0f376a43aa2" />
+面向高中生的 Morse Code 编解码学习工具，支持深度学习解码和传统 DSP 解码。
 
-This is a web-based, real-time Morse code (CW) decoder powered by a CRNN (Convolutional Recurrent Neural Network) model with a CTC Loss function.
+## 功能
 
-A key feature of this application is its client-side processing architecture. By leveraging ONNX Runtime Web, the entire decoding process runs completely within your browser.
+- **Morse 编码**: 文本 → Morse 音频，支持可调 WPM 和 Farnsworth 间距
+- **深度学习解码**: CRNN + CTC 神经网络，高精度
+- **DSP 解码**: 基于 Goertzel 算法的传统实时解码
+- **双解码器模式**: 可切换深度学习和传统 DSP 解码方式
+- **信号质量监控**: SNR 和置信度指示器
+- **合成数据生成**: 内置训练数据增强工具
+- **CTC 解码**: 真正的 Connectionist Temporal Classification 解码
+- **音频可视化**: 频谱示波器风格显示
+- **浏览器运行**: 无需安装，跨平台支持
 
-The neural network model has been trained on an extensive dataset of 50 hours of programmatically generated Morse code audio, enabling it to achieve high accuracy across various sending speeds and conditions.
+## 下载
 
-## Features
+### Windows
+在 [Releases](https://github.com/lucpaysan/cw-by4cwy/releases) 下载最新版本安装包
 
-- **Real-time Morse code decoding** using machine learning
-- **Audio visualization** with spectrum scope style display
-- **Browser-based** - no installation required
-- **Multiplatform** - supports Windows/mac/Android/iOS devices
-- **Signal quality monitoring** - SNR and confidence indicators
-- **Synthetic data generation** - built-in tools for training data augmentation
-- **CTC decoding** - proper Connectionist Temporal Classification decoding
-- **Dual decoder mode** - switch between deep learning and traditional DSP approaches
+### macOS / Android
+在 [Releases](https://github.com/lucpaysan/cw-by4cwy/releases) 下载对应版本
 
-## Usage
+## 在线使用
 
-Open this page:
+访问: [https://lucpaysan.github.io/cw-by4cwy/](https://lucpaysan.github.io/cw-by4cwy/)
 
-[https://e04.github.io/web-deep-cw-decoder/](https://e04.github.io/web-deep-cw-decoder/)
+## 鸣谢
 
-## Acknowledgments
+- 原项目: [web-deep-cw-decoder](https://github.com/e04/web-deep-cw-decoder) by e04
+- 感谢 BH4DUF、BH4HNM 对软件测试的支持
+- 感谢 BY4CWY 提供整个测试平台
+- [ggmorse](https://github.com/ggerganov/ggmorse) - Goertzel 算法参考
+- [DeepCW](https://github.com/VE3NEA/DeepCW) - 深度学习解码参考
+- ONNX Runtime Web
+- Mantine UI
 
-### ggmorse
+## 本地开发
 
-This project incorporates ideas and techniques from [ggmorse](https://github.com/ggerganov/ggmorse) by [Georgi Gerganov](https://github.com/ggerganov), a high-performance Morse code decoding library written in C++.
+```bash
+npm install
+npm run dev
+```
 
-Key inspirations from ggmorse:
-- **Goertzel algorithm** for efficient single-tone detection
-- **Automatic pitch and speed detection** approaches
-- **Signal processing pipeline** design patterns
+## 构建
 
-ggmorse is licensed under the MIT License.
+```bash
+npm run build
+```
 
-### DeepCW
+## 技术栈
 
-This project draws inspiration from [DeepCW](https://github.com/VE3NEA/DeepCW) by Alex Shovkoplyas (VE3NEA), a deep learning-based Morse code decoder using TensorFlow.
+- ONNX Runtime Web - 客户端机器学习推理
+- React + TypeScript - 前端框架
+- Vite - 构建工具
+- Mantine UI - UI 组件库
 
-Key learnings from DeepCW:
-- **Spectrogram-based input representation**
-- **Synthetic data generation** with realistic noise, WPM variation, and keying styles
-- **Character frequency distributions** based on real-world ham radio statistics
-- **CTC Loss** for sequence-to-sequence learning
+## 版权声明
 
-### Training Data Generation
-
-The synthetic data generation pipeline was inspired by techniques from [Morse Code Deep Learning Detect and Decode](https://github.com/MaorAssayag/morse-deep-learning-detect-and-decode) by Maor Assayag et al., developed for the Technion's EE Deep Learning course.
-
-## License
-
-This project is licensed under the MIT License.
+Copyright (c) 2024-present CW LAB Contributors. Based on web-deep-cw-decoder by e04 (MIT License).
