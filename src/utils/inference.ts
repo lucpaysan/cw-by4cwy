@@ -1,4 +1,5 @@
 import type { TextSegment } from "./textDecoder";
+import type { SignalQualityMetrics } from "./signalQuality";
 
 type WorkerRequest =
   | { id: number; type: "loadModel" }
@@ -12,7 +13,12 @@ type WorkerRequest =
 
 type WorkerResponse =
   | { id: number; type: "modelLoaded" }
-  | { id: number; type: "inferenceResult"; segments: TextSegment[] }
+  | {
+      id: number;
+      type: "inferenceResult";
+      segments: TextSegment[];
+      signalQuality: SignalQualityMetrics;
+    }
   | { id: number; type: "error"; error: string };
 
 let inferenceWorker: Worker | null = null;
@@ -96,12 +102,12 @@ export async function runInference(
   audioBuffer: Float32Array,
   filterFreq: number | null,
   filterWidth: number,
-): Promise<TextSegment[]> {
+): Promise<{ segments: TextSegment[]; signalQuality: SignalQualityMetrics }> {
   try {
     await loadModel();
   } catch (error) {
     console.error("Failed to load inference model", error);
-    return [];
+    return { segments: [], signalQuality: { snrDb: 0, signalPower: 0, noisePower: 0, confidence: 0 } };
   }
 
   const audioCopy = audioBuffer.slice();
@@ -118,12 +124,12 @@ export async function runInference(
     );
 
     if (response.type === "inferenceResult") {
-      return response.segments;
+      return { segments: response.segments, signalQuality: response.signalQuality };
     }
 
-    return [];
+    return { segments: [], signalQuality: { snrDb: 0, signalPower: 0, noisePower: 0, confidence: 0 } };
   } catch (error) {
     console.error("Inference worker error", error);
-    return [];
+    return { segments: [], signalQuality: { snrDb: 0, signalPower: 0, noisePower: 0, confidence: 0 } };
   }
 }

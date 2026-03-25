@@ -82,3 +82,11 @@ export const DECODABLE_MIN_FREQ_HZ = 400;
 export const DECODABLE_MAX_FREQ_HZ = 1200;
 export const DEFAULT_DECODE_BANDWIDTH_HZ =
   DECODABLE_MAX_FREQ_HZ - DECODABLE_MIN_FREQ_HZ;
+
+// Synthetic data generation defaults
+export const SYNTHETIC_CONFIG = {
+  WPM_RANGE: [8, 50] as [number, number],
+  TONE_HZ_RANGE: [400, 1200] as [number, number],
+  SNR_DB_RANGE: [-10, 40] as [number, number],
+  DEFAULT_SAMPLE_RATE: 3200,
+};

@@ -5,6 +5,7 @@ import { Encoder } from "./components/Encoder";
 import { Training } from "./components/Training";
 
 type TabId = "decode" | "encode" | "training";
+type DecoderMode = "dl" | "ggmorse";
 
 const tabs: { id: TabId; label: string; icon: string }[] = [
   { id: "decode", label: "DECODE", icon: "📡" },
@@ -14,6 +15,7 @@ const tabs: { id: TabId; label: string; icon: string }[] = [
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>("decode");
+  const [decoderMode, setDecoderMode] = useState<DecoderMode>("dl");
 
   return (
     <Flex style={{ height: "100vh", background: "var(--bg-main)" }}>
@@ -120,29 +122,33 @@ function App() {
                 AI-Powered Morse Code
               </Text>
             </Box>
-            <Box
+            <UnstyledButton
+              onClick={() => setDecoderMode((m) => (m === "dl" ? "ggmorse" : "dl"))}
               style={{
                 padding: "5px 14px",
                 borderRadius: 20,
-                background: "var(--gold-cream)",
-                border: "1px solid var(--gold-light)",
+                background: decoderMode === "dl"
+                  ? "var(--gold-cream)"
+                  : "linear-gradient(135deg, var(--teal-primary), #0a5a6a)",
+                border: `1px solid ${decoderMode === "dl" ? "var(--gold-light)" : "var(--teal-primary)"}`,
+                transition: "all 0.2s ease",
               }}
             >
               <Text
                 style={{
                   fontSize: 10,
                   fontWeight: 700,
-                  color: "var(--gold-dark)",
+                  color: decoderMode === "dl" ? "var(--gold-dark)" : "#fff",
                   letterSpacing: "0.5px",
                 }}
               >
-                ● DL MODE
+                {decoderMode === "dl" ? "● DL MODE" : "● GG MODE"}
               </Text>
-            </Box>
+            </UnstyledButton>
           </Flex>
 
           {/* Tab Content */}
-          {activeTab === "decode" && <Decoder />}
+          {activeTab === "decode" && <Decoder decoderMode={decoderMode} />}
           {activeTab === "encode" && <Encoder />}
           {activeTab === "training" && <Training />}
         </Box>

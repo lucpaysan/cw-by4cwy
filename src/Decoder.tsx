@@ -9,9 +9,16 @@ import {
 import { Scope } from "./Scope";
 import { useDecode } from "./useDecode";
 import { DecodeDisplay } from "./DecodeDisplay";
-import { Box, Button, Flex, Select, Text } from "@mantine/core";
+import { Box, Button, Flex, Select, Text, Badge } from "@mantine/core";
+import { getSNRLabel, getConfidenceLabel } from "./utils/signalQuality";
 
-export const Decoder = () => {
+type DecoderMode = "dl" | "ggmorse";
+
+interface DecoderProps {
+  decoderMode: DecoderMode;
+}
+
+export const Decoder = ({ decoderMode }: DecoderProps) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [filterFreq, setFilterFreq] = useState<number | null>(null);
   const [filterWidth, setFilterWidth] = useState<number>(150);
@@ -22,12 +29,13 @@ export const Decoder = () => {
   const [audioInputDevices, setAudioInputDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedAudioInput, setSelectedAudioInput] = useState<string>("");
 
-  const { loaded, currentSegments, isDecoding } = useDecode({
+  const { loaded, currentSegments, isDecoding, signalQuality, ggMorseText, isGgMorseMode } = useDecode({
     filterFreq,
     filterWidth,
     gain,
     stream,
     decodeWindowSeconds,
+    decoderMode,
   });
 
   const getStream = async (deviceId?: string) => {
@@ -193,6 +201,33 @@ export const Decoder = () => {
             {isDecoding ? "Listening..." : "Ready"}
           </Text>
         </Flex>
+
+        {/* Signal Quality Badges */}
+        {signalQuality && isDecoding && !isGgMorseMode && (
+          <Flex align="center" gap={8}>
+            <Badge
+              variant="light"
+              color={getSNRLabel(signalQuality.snrDb).color}
+              size="sm"
+            >
+              SNR: {signalQuality.snrDb.toFixed(1)} dB
+            </Badge>
+            <Badge
+              variant="outline"
+              color={getConfidenceLabel(signalQuality.confidence).color}
+              size="sm"
+            >
+              CONF: {(signalQuality.confidence * 100).toFixed(0)}%
+            </Badge>
+          </Flex>
+        )}
+
+        {/* ggMorse Mode Indicator */}
+        {isGgMorseMode && isDecoding && (
+          <Badge variant="light" color="teal" size="sm">
+            GG MORSE
+          </Badge>
+        )}
       </Flex>
 
       {/* Scope */}
@@ -241,11 +276,26 @@ export const Decoder = () => {
           overflow: "hidden",
         }}
       >
-        <DecodeDisplay
-          segments={currentSegments}
-          isDecoding={isDecoding}
-          decodeWindowSeconds={decodeWindowSeconds}
-        />
+        {isGgMorseMode ? (
+          <Box p={16} style={{ minHeight: 80 }}>
+            <Text
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 24,
+                color: ggMorseText ? "var(--gold-primary)" : "var(--text-muted)",
+                letterSpacing: 2,
+              }}
+            >
+              {ggMorseText || (isDecoding ? "Listening..." : "Ready")}
+            </Text>
+          </Box>
+        ) : (
+          <DecodeDisplay
+            segments={currentSegments}
+            isDecoding={isDecoding}
+            decodeWindowSeconds={decodeWindowSeconds}
+          />
+        )}
       </Box>
 
       {/* Settings Bar */}
@@ -273,7 +323,7 @@ export const Decoder = () => {
         />
 
         {/* Right side controls */}
-        <Flex gap={24} wrap="wrap" align="center">
+        <Flex gap={16} wrap="wrap" align="center">
           {/* Window */}
           <Flex align="center" gap={8}>
             <Text style={{ fontSize: 11, color: "var(--text-secondary)", fontWeight: 600 }}>

@@ -2,6 +2,9 @@ import { useEffect, useState, useRef, type MutableRefObject } from "react";
 import { loadModel, runInference } from "./utils/inference";
 import { useAudioProcessing } from "./hooks/useAudioProcessing";
 import type { TextSegment } from "./utils/textDecoder";
+import type { SignalQualityMetrics } from "./utils/signalQuality";
+import { GGMorse } from "./ggmorse";
+import { SAMPLE_RATE } from "./const";
 
 const waitForNextAudioChunk = (
   audioBufferRef: MutableRefObject<{ version: number }>,
@@ -20,12 +23,15 @@ const waitForNextAudioChunk = (
     pollForAudio();
   });
 
+type DecoderMode = "dl" | "ggmorse";
+
 type UseDecodeParams = {
   filterFreq: number | null;
   filterWidth: number;
   gain: number;
   stream: MediaStream | null;
   decodeWindowSeconds: number;
+  decoderMode?: DecoderMode;
 };
 
 export const useDecode = ({
@@ -34,20 +40,29 @@ export const useDecode = ({
   gain,
   stream,
   decodeWindowSeconds,
+  decoderMode = "dl",
 }: UseDecodeParams) => {
   const [loaded, setLoaded] = useState(false);
   const [currentSegments, setCurrentSegments] = useState<TextSegment[]>([]);
   const [isDecoding, setIsDecoding] = useState(false);
+  const [signalQuality, setSignalQuality] = useState<SignalQualityMetrics | null>(null);
+  const [ggMorseText, setGgMorseText] = useState<string>("");
 
   const filterParamsRef = useRef({ filterFreq, filterWidth });
   const audioBufferRef = useAudioProcessing(stream, gain, decodeWindowSeconds);
+  const ggmorseRef = useRef<GGMorse | null>(null);
+  const isGgMorseMode = decoderMode === "ggmorse";
 
   useEffect(() => {
-    (async () => {
-      await loadModel();
+    if (!isGgMorseMode) {
+      (async () => {
+        await loadModel();
+        setLoaded(true);
+      })();
+    } else {
       setLoaded(true);
-    })();
-  }, []);
+    }
+  }, [isGgMorseMode]);
 
   useEffect(() => {
     filterParamsRef.current = { filterFreq, filterWidth };
@@ -55,7 +70,8 @@ export const useDecode = ({
 
   useEffect(() => {
     setCurrentSegments([]);
-  }, [decodeWindowSeconds]);
+    setGgMorseText("");
+  }, [decodeWindowSeconds, decoderMode]);
 
   useEffect(() => {
     if (!stream || !loaded) {
@@ -84,18 +100,32 @@ export const useDecode = ({
         lastAudioVersion = audioVersion;
         const { filterFreq, filterWidth } = filterParamsRef.current;
 
-        try {
-          const segments = await runInference(
-            audioBufferRef.current.samples,
-            filterFreq,
-            filterWidth,
-          );
-          if (cancelled || !isRunning) {
-            return;
+        if (isGgMorseMode) {
+          if (!ggmorseRef.current) {
+            ggmorseRef.current = new GGMorse({ sampleRate: SAMPLE_RATE });
+            ggmorseRef.current.onText((text) => {
+              if (!cancelled) {
+                setGgMorseText(text);
+              }
+            });
           }
-          setCurrentSegments(segments);
-        } catch (error) {
-          console.error("[useDecode] Inference error:", error);
+
+          ggmorseRef.current.processSamples(audioBufferRef.current.samples);
+        } else {
+          try {
+            const { segments, signalQuality: sq } = await runInference(
+              audioBufferRef.current.samples,
+              filterFreq,
+              filterWidth,
+            );
+            if (cancelled || !isRunning) {
+              return;
+            }
+            setCurrentSegments(segments);
+            setSignalQuality(sq);
+          } catch (error) {
+            console.error("[useDecode] Inference error:", error);
+          }
         }
       }
     };
@@ -108,9 +138,20 @@ export const useDecode = ({
     return () => {
       cancelled = true;
       isRunning = false;
+      if (ggmorseRef.current) {
+        ggmorseRef.current.reset();
+        ggmorseRef.current = null;
+      }
       setIsDecoding(false);
     };
-  }, [stream, loaded, audioBufferRef]);
+  }, [stream, loaded, audioBufferRef, isGgMorseMode]);
 
-  return { loaded, currentSegments, isDecoding };
+  return {
+    loaded,
+    currentSegments,
+    isDecoding,
+    signalQuality,
+    ggMorseText,
+    isGgMorseMode,
+  };
 };

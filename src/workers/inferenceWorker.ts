@@ -2,6 +2,11 @@
 import * as ort from "onnxruntime-web";
 import { audioToSpectrogramTensor } from "../utils/spectrogramUtils";
 import { decodePredictions, type TextSegment } from "../utils/textDecoder";
+import {
+  estimateSNR,
+  calculateModelConfidence,
+  type SignalQualityMetrics,
+} from "../utils/signalQuality";
 import { ENGLISH_CONFIG } from "../const";
 
 // Dynamic model URL using Vite's import.meta.url
@@ -19,7 +24,12 @@ type WorkerRequest =
 
 type WorkerResponse =
   | { id: number; type: "modelLoaded" }
-  | { id: number; type: "inferenceResult"; segments: TextSegment[] }
+  | {
+      id: number;
+      type: "inferenceResult";
+      segments: TextSegment[];
+      signalQuality: SignalQualityMetrics;
+    }
   | { id: number; type: "error"; error: string };
 
 let session: ort.InferenceSession | null = null;
@@ -39,8 +49,11 @@ async function handleRunInference(
   audioBuffer: Float32Array,
   filterFreq: number | null,
   filterWidth: number,
-): Promise<TextSegment[]> {
+): Promise<{ segments: TextSegment[]; signalQuality: SignalQualityMetrics }> {
   const sess = await ensureSession();
+
+  // Estimate SNR from audio before processing
+  const signalQuality = estimateSNR(audioBuffer, filterFreq, filterWidth);
 
   const spectrogramInput = audioToSpectrogramTensor(
     audioBuffer,
@@ -48,7 +61,7 @@ async function handleRunInference(
     filterWidth,
   );
   if (!spectrogramInput) {
-    return [];
+    return { segments: [], signalQuality };
   }
 
   const inputTensor = new ort.Tensor(
@@ -62,8 +75,27 @@ async function handleRunInference(
   const results = await sess.run(feeds);
   const outputTensor = results[sess.outputNames[0]];
 
-  const decodedSegmentsList = decodePredictions(outputTensor.data, outputTensor.dims);
-  return decodedSegmentsList.length > 0 ? decodedSegmentsList[0] : [];
+  // Calculate model confidence from output probabilities
+  const [, timeSteps, numClasses] = outputTensor.dims as [
+    number,
+    number,
+    number,
+  ];
+  const predArray =
+    outputTensor.data instanceof Float32Array
+      ? outputTensor.data
+      : new Float32Array(outputTensor.data as unknown as ArrayBuffer);
+  const confidence = calculateModelConfidence(predArray, timeSteps, numClasses);
+
+  const decodedSegmentsList = decodePredictions(
+    outputTensor.data,
+    outputTensor.dims,
+  );
+
+  return {
+    segments: decodedSegmentsList.length > 0 ? decodedSegmentsList[0] : [],
+    signalQuality: { ...signalQuality, confidence },
+  };
 }
 
 const ctx: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobalScope;
@@ -81,12 +113,12 @@ ctx.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     }
 
     if (message.type === "runInference") {
-      const segments = await handleRunInference(
+      const { segments, signalQuality } = await handleRunInference(
         message.audioBuffer,
         message.filterFreq,
         message.filterWidth,
       );
-      respond({ id: message.id, type: "inferenceResult", segments });
+      respond({ id: message.id, type: "inferenceResult", segments, signalQuality });
       return;
     }
 
