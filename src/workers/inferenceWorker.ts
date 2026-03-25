@@ -36,7 +36,8 @@ let session: ort.InferenceSession | null = null;
 
 async function ensureSession(): Promise<ort.InferenceSession> {
   if (session) return session;
-  // Try wasm first, fallback to webgl then cpu
+  // Set WASM path before loading
+  ort.env.wasm.wasmPaths = "/";
   session = await ort.InferenceSession.create(MODEL_URL, {
     executionProviders: ["wasm", "webgl", "cpu"],
   });
