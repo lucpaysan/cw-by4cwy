@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "CW-BY4CWY"
-version = "2.1.0"
+version = "2.5.5"
 dependencies = [
  "log",
  "serde",

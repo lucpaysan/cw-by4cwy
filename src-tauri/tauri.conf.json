@@ -45,7 +45,10 @@
         "installMode": "currentUser"
       }
     },
-    "resources": [],
+    "resources": [
+      "../public/model_en.onnx",
+      "../public/logo.png"
+    ],
     "shortDescription": "AI-Powered Morse Code Decoder",
     "longDescription": "CW-BY4CWY is a web-based Morse Code encoder and decoder supporting both traditional signal processing and deep learning. Based on web-deep-cw-decoder by e04. Enhanced by BY4CWY.",
     "copyright": "Copyright (c) 2026 BY4CWY. Based on web-deep-cw-decoder by e04 (MIT License). Uses ONNX Runtime Web (Apache-2.0).",
