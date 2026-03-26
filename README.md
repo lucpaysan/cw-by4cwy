@@ -27,7 +27,7 @@
 
 ## 在线使用
 
-访问: [https://lucpaysan.github.io/cw-by4cwy/](https://lucpaysan.github.io/cw-by4cwy/)
+访问: [https://lucpaysan.github.io/CW-BY4CWY/](https://lucpaysan.github.io/CW-BY4CWY/)
 
 ## 鸣谢
 
